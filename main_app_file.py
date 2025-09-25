@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Advanced Order Book Analysis Bot for Binance.US
-Optimized for Render deployment with simplified architecture
+Optimized for Render deployment with Python 3.13 compatibility
 """
 
 import asyncio
@@ -11,7 +11,6 @@ import os
 import time
 from datetime import datetime, timedelta
 from typing import Dict, List, Optional, Tuple
-import aiohttp
 import numpy as np
 import pandas as pd
 from flask import Flask, render_template_string, jsonify, request
@@ -29,7 +28,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Flask app setup
+# Flask app setup - Using threading instead of eventlet for Python 3.13 compatibility
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', 'dev-secret-key-change-in-production')
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
@@ -553,6 +552,7 @@ class OrderBookAnalyzer:
         """Fetch symbols from Binance.US (simplified for Render)"""
         try:
             response = requests.get('https://api.binance.us/api/v3/exchangeInfo', timeout=10)
+            response.raise_for_status()
             data = response.json()
             
             symbols = []
@@ -573,15 +573,15 @@ class OrderBookAnalyzer:
         try:
             url = f'https://api.binance.us/api/v3/depth?symbol={symbol}&limit=10'
             response = requests.get(url, timeout=5)
+            response.raise_for_status()
             
-            if response.status_code == 200:
-                data = response.json()
-                return {
-                    'symbol': symbol,
-                    'bids': [[float(price), float(qty)] for price, qty in data['bids']],
-                    'asks': [[float(price), float(qty)] for price, qty in data['asks']],
-                    'timestamp': time.time()
-                }
+            data = response.json()
+            return {
+                'symbol': symbol,
+                'bids': [[float(price), float(qty)] for price, qty in data['bids']],
+                'asks': [[float(price), float(qty)] for price, qty in data['asks']],
+                'timestamp': time.time()
+            }
         except Exception as e:
             logger.error(f"Error fetching orderbook for {symbol}: {e}")
         return None
