@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: orderbook-analyzer
+    env: python
+    region: oregon
+    plan: starter
+    buildCommand: pip install --upgrade pip && pip install -r requirements.txt
+    startCommand: gunicorn --worker-class gthread --workers 1 --threads 4 --bind 0.0.0.0:$PORT --timeout 120 --keep-alive 5 --max-requests 1000 --preload app:app
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.11.6
+      - key: SECRET_KEY
+        generateValue: true
+      - key: WEB_CONCURRENCY
+        value: 1
+      - key: PYTHONUNBUFFERED
+        value: true
+    healthCheckPath: /api/symbols
+    autoDeploy: false
